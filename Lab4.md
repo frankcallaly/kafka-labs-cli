@@ -44,7 +44,7 @@ while true; do
   KEY="user-$((RANDOM % 6 + 1))"
   VALUE="event-$((RANDOM % 1000))"
   echo "$KEY:$VALUE" | kafka-console-producer.sh \
-    --broker-list localhost:9092 \
+    --bootstrap-server localhost:9092 \
     --topic activity \
     --property "parse.key=true" \
     --property "key.separator=:"
