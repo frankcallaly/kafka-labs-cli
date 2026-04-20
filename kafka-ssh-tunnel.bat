@@ -1,0 +1,1 @@
+ssh -L 9092:localhost:9092 -L 29092:localhost:29092 -L 39092:localhost:39092 -L 49092:localhost:49092 student@kafka-lin%1.neueda.com
