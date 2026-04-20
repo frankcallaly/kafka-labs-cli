@@ -13,3 +13,14 @@ kafka-console-producer.sh --bootstrap-server localhost:9092 --topic orders
 docker-compose up -d
 
 docker-compose logs -f
+
+while true; do
+  KEY="user-$((RANDOM % 6 + 1))"
+  VALUE="event-$((RANDOM % 1000))"
+  echo "$KEY:$VALUE" | kafka-console-producer.sh \
+    --bootstrap-server localhost:29092 \
+    --topic activity \
+    --property "parse.key=true" \
+    --property "key.separator=:"
+  sleep 5
+done
