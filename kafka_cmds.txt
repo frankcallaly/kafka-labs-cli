@@ -1,1 +1,7 @@
 docker run -d -p 9092:9092 --name single-broker apache/kafka:latest
+
+kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+kafka-topics.sh --bootstrap-server localhost:9092 --topic orders --create
+
+kafka-topics.sh --bootstrap-server localhost:9092 --topic orders --describe

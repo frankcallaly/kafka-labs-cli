@@ -80,7 +80,7 @@ kafka-console-producer.sh
 Start a producer that sends key/value messages to the `orders` topic:
 ```
 kafka-console-producer.sh \
-  --broker-list localhost:9092 \
+  --bootstrap-server localhost:9092 \
   --topic orders \
   --property "parse.key=true" \
   --property "key.separator=:"
