@@ -1,88 +1,124 @@
 ## Goals: ##
-1. Start a kafka cluster with 3 brokers as docker containers
-2. Create a topic from the cli with multiple partitions and replications
-3. Produce messages from the cli
-4. Consume messages from the cli
-5. View partition info from the cli
-6. View consumer group info from the cli
+1. Explore the parameters available for kafka-topics.sh
+2. Create a topic with multiple partitions
+3. Produce messages with keys using the console producer
+4. Consume messages using the console consumer
+5. Delete a topic from the cli
 
 ## Steps: ##
 
-### Step 1: Start a kafka cluster with docker-compose ###
-Download the docker-compose.yaml file to your machine.
-
-Explore the contents of the file and try to understand what it's doing.
-
-In the same directory as the yaml file start the containers:
+### Step 1: Start a kafka broker (if not already running) ###
 ```
-docker-compose up -d
+docker run --restart unless-stopped -d -p 9092:9092 --name single-broker apache/kafka:latest
 ```
 
-Verify that the containers are running
-```
-docker-compose top
-```
+If the container is already running from Lab 1, skip this step.
 
-### Step 2: View cli tools inside the container ###
+### Step 2: Explore the kafka-topics.sh parameters ###
+Run the tool with no arguments to see the full list of available options:
 ```
-docker exec -it broker1 /bin/bash
-cd opt/kafka/bin/
-ls
+kafka-topics.sh
 ```
 
-### Step 3: Create a topic from the cli ###
-View the options for the tool kafka-topics.sh
+Take a moment to read through the options. Note the flags for:
+- `--create` — creates a new topic
+- `--describe` — shows partition and replication details for a topic
+- `--list` — lists all topics on the broker
+- `--delete` — deletes a topic
+- `--partitions` — sets the number of partitions
+- `--replication-factor` — sets the replication factor
+- `--bootstrap-server` — identifies the broker to connect to
 
-```./kafka-topics.sh```
+### Step 3: Create a new topic ###
+Create a topic called `orders` with 3 partitions and a replication factor of 1:
+```
+kafka-topics.sh --create \
+  --bootstrap-server localhost:9092 \
+  --partitions 3 \
+  --replication-factor 1 \
+  --topic orders
+```
 
-Create a topic called "test-topic-2" with 2 partitions and 2 replications of each partition
+Verify the topic was created and inspect its partition layout:
+```
+kafka-topics.sh --describe \
+  --bootstrap-server localhost:9092 \
+  --topic orders
+```
 
-### Step 4: In a new terminal run a consumer ###
-Repeat step 2 in a second command window
+Note which broker is the leader for each partition, and the partition offsets.
 
-View the options for the tool kafka-console-consumer.sh
+### Step 4: In a new terminal, start a console consumer ###
+Open a new terminal window.
 
-```./kafka-console-consumer.sh```
+View the options for the consumer tool:
+```
+kafka-console-consumer.sh
+```
 
-Start a console consumer process, ensure that you give your consumer group a name.
+Start a consumer on the `orders` topic, reading from the beginning and printing both keys and values:
+```
+kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic orders \
+  --from-beginning \
+  --property print.key=true \
+  --property print.value=true \
+  --property key.separator=" : "
+```
 
-Ensure that you specify that keys will be given and use the : character as a key/value separator.
-Hint: Properties "parse.key=true" and "key.separator=:"
+Leave this running — you will see messages appear here as you produce them in the next step.
 
-### Step 5: In a new terminal run a SECOND consumer ###
-Repeat step 2 in a third command window
+### Step 5: In a new terminal, start a console producer ###
+Open a third terminal window.
 
-Start another console consumer process, ensure that you give your consumer group the same name as the previous consumer.
+View the options for the producer tool:
+```
+kafka-console-producer.sh
+```
 
-Ensure that you specify that keys will be given and use the : character as a key/value separator.
-Hint: Properties "parse.key=true" and "key.separator=:" 
+Start a producer that sends key/value messages to the `orders` topic:
+```
+kafka-console-producer.sh \
+  --broker-list localhost:9092 \
+  --topic orders \
+  --property "parse.key=true" \
+  --property "key.separator=:"
+```
 
-### Step 5: In a new terminal run a producer ###
-Repeat step 2 in a fourth command window
+Type a few messages in the format `key:value`, pressing Enter after each one:
+```
+customer-1:order placed
+customer-2:order placed
+customer-1:order shipped
+customer-3:order placed
+customer-2:order shipped
+```
 
-View the options for the tool kafka-console-producer.sh
+Verify that the messages appear in your consumer window. Note that messages with the same key (e.g. `customer-1`) always arrive in the same order — this is because they are routed to the same partition.
 
-```./kafka-console-producer.sh```
+Press `Ctrl-C` to stop the producer when done.
 
-Start a console producer process, ensure that you will specify the keys and use the : character as a key/value separator.
-Hint: Properties "parse.key=true" and "key.separator=:" 
+### Step 6: Delete the topic ###
+In your first terminal window, delete the `orders` topic:
+```
+kafka-topics.sh --delete \
+  --bootstrap-server localhost:9092 \
+  --topic orders
+```
 
-Verify that when you type messages in the producer window you can see them in the consumer window(s)
+Confirm the topic has been removed by listing all topics:
+```
+kafka-topics.sh --list \
+  --bootstrap-server localhost:9092
+```
 
+The `orders` topic should no longer appear in the list.
 
-### Optional Extras - 1 ###
+### Optional Extras ###
 
-View the options for the kafka-topics.sh tool.
+Can you produce messages **without** a key and observe how Kafka distributes them across partitions?
 
-Can you use it to see the partitions for your topic?
+Remove the `parse.key` and `key.separator` properties from the producer command and send several messages. Use the `--property print.partition=true` flag on the consumer to see which partition each message lands on. Is the distribution what you expected?
 
-What happens if you stop and start a broker using docker-compose and then continue to send messages?
-
-### Optional Extras - 2 ###
-
-View the options for the kafka-consumer-groups.sh tool.
-
-If you stop a consumer process and send new messages, what happens and why?
-
-If you start a new consumer process and send new messages, what happens and why?
-
+####################
