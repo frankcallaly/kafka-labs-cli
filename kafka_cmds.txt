@@ -5,3 +5,7 @@ kafka-topics.sh --bootstrap-server localhost:9092 --list
 kafka-topics.sh --bootstrap-server localhost:9092 --topic orders --create
 
 kafka-topics.sh --bootstrap-server localhost:9092 --topic orders --describe
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic orders --from-beginning
+
+kafka-console-producer.sh --bootstrap-server localhost:9092 --topic orders
